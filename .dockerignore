@@ -1,0 +1,6 @@
+docker.compose.yml
+README.MD
+/mongo-volume
+.gitignore
+db-env-vars.env.env
+/K8s

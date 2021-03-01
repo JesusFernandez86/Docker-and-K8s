@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    version: v1
+  name: flask-deployment-v1
+  namespace: istio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flask-app
+  template:
+    metadata:
+      labels:
+        version: v1
+        app: flask-app
+    spec:
+      containers:
+      - name: flask-app
+        image: latalavera/flask-app:10
+        env:
+          - name: MONGODB_USERNAME
+            value: root
+          - name: MONGODB_PASSWORD
+            value: pass
+          - name: MONGODB_HOSTNAME
+            value: mongodb-flask
+          - name: MONGODB_DATABASE
+            value: cars_db
+        ports:
+          - containerPort: 5000
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-service
+  namespace: istio
+spec:
+  selector:
+    app: flask-app
+  ports:
+  - port: 5000
+    protocol: TCP
+    targetPort: 5000
+  type: ClusterIP
+
+
+        

@@ -1,0 +1,34 @@
+version: "3.7"
+services:
+  app:
+    container_name: cars_app
+    image: latalavera/flask-app:10
+    build: .
+    environment:
+      APP_ENV: "dev"
+      APP_DEBUG: "False"
+      MONGODB_DATABASE: cars_db
+      MONGODB_USERNAME: root
+      MONGODB_PASSWORD: pass
+      MONGODB_HOSTNAME: mongodb-flask
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+    networks:
+      - app_network 
+  db:
+    container_name: cars_db
+    image: mongo:4.0
+    hostname: mongodb-flask
+    env_file:
+      - db-env-vars.env
+    volumes:
+      - ./init-db.js:/docker-entrypoint-initdb.d/init-db.js:ro
+      - ./mongo-volume:/data/db 
+    ports:
+      - ${DB_PORT}:${DB_PORT}
+    networks:
+      - app_network 
+networks:
+  app_network:
+    name: app_net
+    driver: bridge

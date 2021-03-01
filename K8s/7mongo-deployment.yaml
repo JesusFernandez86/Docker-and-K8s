@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb-deployment
+  namespace: flask-app
+  annotations:
+    prometheus.io/scrape: 'true'
+    prometheus.io/port:   '9090'
+spec:
+  replicas: 1  
+  selector:
+    matchLabels:
+      app: mongodb
+      run: together
+  template:
+    metadata:
+      labels:
+        app: mongodb
+        run: together
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port:   '9090'
+    spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: run
+                operator: In
+                values:
+                - together
+            topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name: mongodb
+        image: mongo:4.0
+        ports:
+          - containerPort: 27017
+        volumeMounts:
+        - name: mongo-initdb
+          mountPath: /docker-entrypoint-initdb.d
+        - name: data
+          mountPath: /data
+        env:
+          - name: MONGO_INITDB_DATABASE
+            value: cars_db
+          - name: MONGO_INITDB_ROOT_USERNAME
+            valueFrom:
+              secretKeyRef:
+                key: MONGO_INITDB_ROOT_USERNAME
+                name: mongo-credentials
+          - name: MONGO_INITDB_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: MONGO_INITDB_ROOT_PASSWORD
+                name: mongo-credentials
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+      volumes:
+      - name: mongo-initdb
+        configMap:
+          name: mongo-initdb
+      - name: data
+        persistentVolumeClaim:
+          claimName: mongo-pvclaim
+---  
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-flask 
+  namespace: flask-app
+spec:
+  selector:
+    app: mongodb
+  ports:
+    - protocol: TCP
+      port: 27017
+      targetPort: 27017
+  type: ClusterIP

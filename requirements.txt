@@ -1,0 +1,4 @@
+flask
+pymongo
+json_logging
+Flask-PyMongo==2.2.0

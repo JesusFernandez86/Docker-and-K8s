@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    {{ include "app.metadataLabels" $ | nindent 4 }}
+  name: {{ template "app.name" . }}-flask
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.flask_deployment.replicas }}
+  selector:
+    matchLabels:
+      deploy: separate
+      run: together
+      {{ include "app.metadataLabels" $ | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        deploy: separate
+        run: together
+        {{ include "app.metadataLabels" $ | nindent 8 }}
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: deploy
+                  operator: In
+                  values:
+                  - separate
+            topologyKey: kubernetes.io/hostname  
+      containers:
+      - name: flask-app
+        image: {{ .Values.flask_deployment.image.name }}:{{ .Values.flask_deployment.image.tag }}
+        env:
+          - name: MONGODB_USERNAME
+            value: root
+          - name: MONGODB_PASSWORD
+            value: pass
+          - name: MONGODB_HOSTNAME
+            value: keepcoding-mongodb
+          - name: MONGODB_DATABASE
+            value: cars_db
+        ports:
+          - containerPort: {{ .Values.flask_deployment.ports.containerPort }}
+        resources:
+          requests:
+            cpu: {{ .Values.flask_deployment.resources.requests.cpu }}
+            memory: {{ .Values.flask_deployment.resources.requests.memory }}
+          limits:
+            cpu: {{ .Values.flask_deployment.resources.limits.cpu }}
+            memory: {{ .Values.flask_deployment.resources.limits.memory }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "app.name" . }}-flask
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    {{ include "app.metadataLabels" $ | nindent 4 }}
+  ports:
+  - port: {{ .Values.flask_service.ports.port }}
+    protocol: {{ .Values.flask_service.ports.protocol }}
+    targetPort: {{ .Values.flask_service.ports.targetPort }}  
+  type: ClusterIP
+

@@ -1,0 +1,67 @@
+namespace: flask-app
+
+flask_deployment:
+  replicas: 2
+
+  image:
+    name: latalavera/flask-app
+    tag: "3.0"
+
+  ports:
+    containerPort: 5000
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+flask_service:
+  ports:
+    port: 5000
+    protocol: TCP
+    targetPort: 5000  
+
+ingress:
+  enabled: true
+  host: talavera-35.205.75.79.nip.io 
+
+mongodb:
+  metrics:
+    enabled: true
+  global:
+    namespaceOverride: flask-app
+  auth:
+    username: root
+    password: pass
+    database: cars_db
+    rootPassword: pass
+  initdbScripts: 
+    init-db.js: |
+      db = db.getSiblingDB("cars_db");
+      db.car_tb.drop();
+
+      db.car_tb.insertMany([
+          {
+              "id": 1,
+              "brand": "Ford",
+              "model": "Mustang"
+          },
+          {
+              "id": 2,
+              "brand": "Lamborghini",
+              "model": "Veneno"
+          },
+          {
+              "id": 3,
+              "brand": "Ferrari",
+              "model": "Enzo"
+          },
+          {
+              "id": 4,
+              "brand": "Mercedes",
+              "model": "Cls63-AMG"
+          },
+      ]);

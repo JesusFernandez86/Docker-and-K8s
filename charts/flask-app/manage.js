@@ -1,0 +1,1 @@
+db.getSiblingDB('cars_db').createUser({ user: 'root', pwd: 'pass', roles: [{role: 'readWrite', db: 'cars_db'}] });
